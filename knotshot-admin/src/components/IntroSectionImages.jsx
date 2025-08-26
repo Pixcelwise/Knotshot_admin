@@ -1,24 +1,25 @@
-import React, { useState , useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios'
+import imageCompression from 'browser-image-compression';
 const IntroSectionImages = () => {
   const [images, setImages] = useState([]);
-  const [existingImages , setExistingImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
 
   useEffect(() => {
-        const fetchData = async () => {
-            try{
-                const response = await axios.get('http://localhost:8383/api/v1/intro');
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('/api/v1/intro');
 
-                console.log("GG", response);
-                setExistingImages(response.data.data.map(img => img.imageUrl));
-            } catch(e) {
-                console.log('there was some error')
-            }
-           
-        }
+        console.log("GG", response);
+        setExistingImages(response.data.data.map(img => img.imageUrl));
+      } catch (e) {
+        console.log('there was some error')
+      }
 
-        fetchData();
-  },[])
+    }
+
+    fetchData();
+  }, [])
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -42,26 +43,43 @@ const IntroSectionImages = () => {
     if (images.length === 0) return alert('No images selected!');
 
     const formData = new FormData();
-    images.forEach((img) => {
-      formData.append('images', img.file);
-    });
+    try {
+      for (const img of images) {
+        let file = img.file;
 
-    try{
-        const response = await axios.post('http://localhost:8383/api/v1/intro/image' , formData , {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+        // Only compress if larger than 10MB
+        if (file.size > 10485760) {
+          const options = {
+            maxSizeMB: 8, // 8MB
+            useWebWorker: true,
+          };
+          file = await imageCompression(file, options);
+          console.log(`Compressed ${img.file.name}: from ${img.file.size} → ${file.size} bytes`);
+        }
+
+        formData.append('images', file);
+      }
+
+      try {
+        const response = await axios.post('http://localhost:8383/api/v1/intro/image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         })
 
         alert('Images uploaded successfully!');
         console.log('Server Response:', response.data);
-    
+
         setImages([]);
-    } catch (e) {
+      } catch (e) {
         console.error(e);
         alert('Failed to upload images');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error processing images');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -76,11 +94,11 @@ const IntroSectionImages = () => {
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-black mb-8 text-center">Current Images</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            
+
             {existingImages.map((img, index) => (
               <div key={index} className="bg-white rounded-xl border-2 border-gray-200 p-4 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <img 
-                  src={img} 
+                <img
+                  src={img}
                   alt={`Current ${index + 1}`}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />
@@ -99,7 +117,7 @@ const IntroSectionImages = () => {
           {/* Upload Section */}
           <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h2 className="text-2xl font-bold text-black mb-6 text-center">Upload New Images</h2>
-            
+
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-black transition-colors duration-300">
               <div className="mb-6">
                 <div className="w-20 h-20 bg-black rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -107,7 +125,7 @@ const IntroSectionImages = () => {
                 </div>
                 <p className="text-gray-600 mb-2">Drop your images here or</p>
               </div>
-              
+
               <label className="inline-block bg-black hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-lg cursor-pointer transition-all duration-300 transform hover:scale-105">
                 Choose Files
                 <input
@@ -118,7 +136,7 @@ const IntroSectionImages = () => {
                   className="hidden"
                 />
               </label>
-              
+
               <p className="text-gray-500 text-sm mt-4">JPG, PNG, WebP up to 5MB each</p>
               <p className="text-gray-400 text-xs mt-2">Select multiple files at once</p>
             </div>
@@ -127,18 +145,18 @@ const IntroSectionImages = () => {
           {/* Preview Section */}
           <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h2 className="text-2xl font-bold text-black mb-6 text-center">New Images Preview</h2>
-            
+
             <div className="bg-gray-50 rounded-xl p-6 min-h-64 border border-gray-200">
               {images.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
                   {images.map((img) => (
                     <div key={img.id} className="relative group">
-                      <img 
-                        src={img.url} 
+                      <img
+                        src={img.url}
                         alt="Preview"
                         className="w-full h-32 object-cover rounded-lg shadow-md"
                       />
-                      <button 
+                      <button
                         onClick={() => removeImage(img.id)}
                         className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       >
@@ -157,7 +175,7 @@ const IntroSectionImages = () => {
                 </div>
               )}
             </div>
-            
+
             {images.length > 0 && (
               <div className="mt-4 text-center">
                 <p className="text-gray-600 text-sm">
@@ -177,7 +195,7 @@ const IntroSectionImages = () => {
               <p className="text-gray-600 text-sm">These will be added to your intro section</p>
             </div>
             <div className="flex justify-center space-x-4">
-              <button 
+              <button
                 onClick={() => setImages([])}
                 className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-300"
               >
@@ -186,9 +204,9 @@ const IntroSectionImages = () => {
               <button
                 onClick={handleUpload}
                 className="bg-black hover:bg-gray-800 text-white font-bold py-3 px-12 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-                >
+              >
                 Save New Images
-            </button>
+              </button>
 
             </div>
           </div>

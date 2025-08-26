@@ -9,7 +9,7 @@ const HeaderVideoUpload = () => {
   useEffect(() => {
     const fetchVideo = async () => {
       try {
-        const response = await axios.get('http://localhost:8383/api/v1/landing');
+        const response = await axios.get('/api/v1/landing');
         console.log(response);
   
         // Correct property name: videoUrl (not videoURL)

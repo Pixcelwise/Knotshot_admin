@@ -54,7 +54,7 @@ const Testimonial = () => {
         formData.append('file', image);
       
         try {
-          const response = await axios.post('http://localhost:8383/api/v1/testimony/upload', formData, {
+          const response = await axios.post('/api/v1/testimony/upload', formData, {
             headers: {
               'Content-Type': 'multipart/form-data',
             },

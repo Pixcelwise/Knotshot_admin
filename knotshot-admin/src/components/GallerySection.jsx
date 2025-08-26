@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import imageCompression from 'browser-image-compression';
+
+import GalleryPreview from './Previews/GalleryPreview';
 
 const GalleryUpload = () => {
   // Single upload state
@@ -10,6 +13,33 @@ const GalleryUpload = () => {
   const [multipleFiles, setMultipleFiles] = useState([]);
   const [multipleCategory, setMultipleCategory] = useState('');
   const [isMultipleUploading, setIsMultipleUploading] = useState(false);
+
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+
+  useEffect(() => {
+    const fetchGalleryImages = async () => {
+      setIsLoadingGallery(true);
+      try {
+        const response = await fetch('/api/v1/gallery', {
+          params: {
+            offset,
+            limit: 1000,
+          },
+        }
+        );
+        const data = await response.json();
+        // Assuming data.data is an array of { imageUrl, category }
+        setGalleryImages(data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch gallery images', err);
+      } finally {
+        setIsLoadingGallery(false);
+      }
+    };
+    fetchGalleryImages();
+  }, [isSingleUploading, isMultipleUploading]);
+  // refetch after upload
 
   // Single file upload handlers
   const handleSingleFileChange = (e) => {
@@ -23,12 +53,24 @@ const GalleryUpload = () => {
     }
 
     const formData = new FormData();
-    formData.append('images', singleFile);
+    let file = singleFile;
+
+    // Compress if larger than 10MB
+    if (file.size > 10485760) {
+      const options = {
+        maxSizeMB: 8,
+        useWebWorker: true,
+      };
+      file = await imageCompression(file, options);
+      console.log(`Compressed single image: ${singleFile.name} from ${singleFile.size} → ${file.size} bytes`);
+    }
+
+    formData.append('images', file);
     formData.append('category', singleCategory);
 
     try {
       setIsSingleUploading(true);
-      const response = await fetch('http://localhost:8383/api/v1/gallery/image', {
+      const response = await fetch('/api/v1/gallery/image', {
         method: 'POST',
         body: formData
       });
@@ -62,12 +104,24 @@ const GalleryUpload = () => {
     }
 
     const formData = new FormData();
-    multipleFiles.forEach((file) => formData.append('images', file));
+
+    for (const file of multipleFiles) {
+      let compressedFile = file;
+      if (file.size > 10485760) {
+        const options = {
+          maxSizeMB: 8,
+          useWebWorker: true,
+        };
+        compressedFile = await imageCompression(file, options);
+        console.log(`Compressed bulk image: ${file.name} from ${file.size} → ${compressedFile.size} bytes`);
+      }
+      formData.append('images', compressedFile);
+    }
     formData.append('category', multipleCategory);
 
     try {
       setIsMultipleUploading(true);
-      const response = await fetch('http://localhost:8383/api/v1/gallery/image', {
+      const response = await fetch('/api/v1/gallery/image', {
         method: 'POST',
         body: formData
       });
@@ -96,8 +150,11 @@ const GalleryUpload = () => {
         <p className="text-gray-600 text-xl">Choose your preferred upload method</p>
       </div>
 
+      {/* Gallery Images Section */}
+      <GalleryPreview />
+
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
+
         {/* Single Image Upload Section */}
         <div className="bg-white border-2 border-black rounded-lg p-8 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="text-center mb-8">
@@ -150,9 +207,8 @@ const GalleryUpload = () => {
             <button
               onClick={handleSingleUpload}
               disabled={isSingleUploading}
-              className={`w-full bg-black text-white py-4 rounded-lg font-bold text-lg shadow-lg hover:bg-gray-800 transition-all duration-200 transform hover:scale-105 ${
-                isSingleUploading ? 'opacity-50 cursor-not-allowed transform-none' : ''
-              }`}
+              className={`w-full bg-black text-white py-4 rounded-lg font-bold text-lg shadow-lg hover:bg-gray-800 transition-all duration-200 transform hover:scale-105 ${isSingleUploading ? 'opacity-50 cursor-not-allowed transform-none' : ''
+                }`}
             >
               {isSingleUploading ? 'Uploading...' : 'Upload Image'}
             </button>
@@ -218,9 +274,8 @@ const GalleryUpload = () => {
             <button
               onClick={handleMultipleUpload}
               disabled={isMultipleUploading}
-              className={`w-full bg-white text-black py-4 rounded-lg font-bold text-lg shadow-lg hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 ${
-                isMultipleUploading ? 'opacity-50 cursor-not-allowed transform-none' : ''
-              }`}
+              className={`w-full bg-white text-black py-4 rounded-lg font-bold text-lg shadow-lg hover:bg-gray-200 transition-all duration-200 transform hover:scale-105 ${isMultipleUploading ? 'opacity-50 cursor-not-allowed transform-none' : ''
+                }`}
             >
               {isMultipleUploading ? 'Uploading...' : `Upload ${multipleFiles.length || ''} Images`}
             </button>

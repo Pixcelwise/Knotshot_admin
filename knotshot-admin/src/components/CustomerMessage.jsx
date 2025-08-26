@@ -9,7 +9,7 @@ const CustomerMessage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('http://localhost:8383/api/v1/form/get-contact-form-data');
+        const res = await axios.get('/api/v1/form/get-contact-form-data');
         console.log('Fetched data:', res.data.data);
         setCustomerData(res.data.data || []);
       } catch (e) {

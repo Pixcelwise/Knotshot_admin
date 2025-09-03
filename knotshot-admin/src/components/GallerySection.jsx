@@ -21,13 +21,7 @@ const GalleryUpload = () => {
     const fetchGalleryImages = async () => {
       setIsLoadingGallery(true);
       try {
-        const response = await fetch('/api/v1/gallery', {
-          params: {
-            offset,
-            limit: 1000,
-          },
-        }
-        );
+        const response = await fetch('/api/v1/gallery');
         const data = await response.json();
         // Assuming data.data is an array of { imageUrl, category }
         setGalleryImages(data.data || []);

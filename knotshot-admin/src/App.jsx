@@ -11,21 +11,21 @@ import ContactFooter from './common/Footer'
 const App = () => {
   return (
     <>
-    <div className='py-32 px-32'>
-      <Header/>
+      <div className='py-32 px-32'>
+        <Header />
 
-      <HeaderVideoUpload/>
-      <IntroSectionImages/>
-      <GallerySection/>
-      <VideoUpload/>
-      <Testimonial/>
-      <CustomerMessage/>
+        <HeaderVideoUpload />
+        <IntroSectionImages />
+        <GallerySection />
+        {/* <VideoUpload/> */}
+        <Testimonial />
+        <CustomerMessage />
 
-      
-    </div>
-    <div>
-      <ContactFooter/>
-    </div>
+
+      </div>
+      <div>
+        <ContactFooter />
+      </div>
     </>
   )
 }

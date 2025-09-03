@@ -10,7 +10,7 @@ const GalleryPreview = () => {
         const fetchGalleryImages = async () => {
             setIsLoadingGallery(true);
             try {
-                const response = await fetch('/api/v1/gallery/');
+                const response = await fetch('/api/v1/gallery?offset=0&limit=99999');
                 const data = await response.json();
                 setGalleryImages(data.data || []);
             } catch (err) {
